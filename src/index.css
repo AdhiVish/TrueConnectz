@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* ---------- brand tokens, taken from the True Connectz logo ----------
+   Logo golds: deep amber #C07818, core #F0A818, bright #FFD830, highlight #FFF078;
+   near-black #181818 ("HR SERVICES"). Gold text on white uses a deeper shade so it reads. */
+:root {
+  --w: #fff;
+  --b: #fff8e7; /* warm cream band (a tint of the logo gold) */
+  --b2: #fbecc2;
+  --ink: #181818;
+  --mut: #6b6355;
+  --gold: #b07408; /* gold for text on light backgrounds */
+  --gold2: #f0a818; /* core logo gold */
+  --sun: #ffd830;
+  --glow: #fff078;
+  --line: #efe1bb;
+  /* the logo's metallic gold, for buttons and accents */
+  --metal: linear-gradient(135deg, #c07818 0%, #f0a818 32%, #fff078 52%, #ffd830 68%, #d8a818 100%);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-mut: var(--mut);
+  --color-gold: var(--gold);
+  --color-gold2: var(--gold2);
+  --color-beige: var(--b);
+  --color-beige2: var(--b2);
+  --color-line: var(--line);
+  --color-sun: var(--sun);
+  --font-h: "Cormorant Garamond", serif;
+  --font-t: "Jost", sans-serif;
+}
+
+@layer base {
+  html { scroll-padding-top: 90px; }
+  html.lenis-smooth { scroll-behavior: auto !important; }
+  body {
+    font-family: var(--font-t);
+    color: var(--ink);
+    background: var(--w);
+    line-height: 1.65;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-h); font-weight: 500; line-height: 1.05; letter-spacing: -0.01em; }
+  em { font-style: italic; color: var(--gold); }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  ::selection { background: var(--sun); color: var(--ink); }
+}
+
+@layer components {
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold);
+    font-weight: 500; display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::before { content: ""; width: 34px; height: 1px; background: var(--gold); }
+  .btn {
+    display: inline-block; padding: 15px 30px; border-radius: 2px; font-size: 13px; letter-spacing: 0.14em;
+    text-transform: uppercase; font-weight: 600; border: 1px solid #d8a818;
+    background: var(--metal); background-size: 160% 100%; background-position: 0% 50%; color: var(--ink); cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s, background-color 0.3s, color 0.3s, background-position 0.6s; font-family: var(--font-t); text-align: center;
+  }
+  .btn:hover { box-shadow: 0 10px 30px rgba(240, 168, 24, 0.4); transform: translateY(-2px); background-position: 100% 50%; }
+  .btn-o { background: transparent; color: var(--ink); border-color: var(--ink); }
+  .btn-o:hover { background: var(--ink); color: #fff; box-shadow: none; }
+  .btn-o-light { background: transparent; color: #fff; border-color: #fff; }
+  .btn-o-light:hover { background: #fff; color: var(--ink); box-shadow: none; }
+  .section-h2 { font-size: clamp(38px, 5vw, 64px); margin: 16px 0; }
+}
+
+/* the gold thread drawn through the hero network */
+@keyframes pulse-node { 50% { transform: scale(1.25); } }
+.net-node { transform-box: fill-box; transform-origin: center; animation: pulse-node 3s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .net-node { animation: none; }
+  *, *::before, *::after { transition-duration: 0.01s !important; }
+}
+
+/* metallic gold text, like the logo lettering (used for accent words on dark backgrounds) */
+.metal-text {
+  background: var(--metal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
