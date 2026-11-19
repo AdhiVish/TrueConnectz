@@ -1,127 +1,263 @@
-import { motion } from "motion/react";
-import { BRAND_PROMISE, type Audience } from "@/data/site";
+import { useEffect, useRef, type MouseEvent } from "react";
+import { motion, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
+import { ArrowUpRight, Briefcase, GraduationCap } from "lucide-react";
+import { asset, BRAND_PROMISE, SERVICES, type Audience } from "@/data/site";
 import { goTo, useUI } from "@/lib/ui";
 
-/** Points of the "connected network" graphic; the first one is the hub. */
-const P: [number, number][] = [
-  [260, 240], [110, 120], [200, 60], [360, 70], [440, 160], [420, 300], [330, 410],
-  [170, 390], [70, 280], [260, 140], [140, 240], [380, 220], [260, 330],
-];
-const LINES: [number, number][] = [];
-P.forEach((a, i) => P.forEach((b, j) => j > i && Math.hypot(a[0] - b[0], a[1] - b[1]) < 175 && LINES.push([i, j])));
+/**
+ * Live gold network in the background: points drift slowly and link up when
+ * they come near each other (people connecting). Points near the cursor are
+ * drawn towards it. Pauses when the hero is off screen.
+ */
+function NetworkCanvas() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current!;
+    const ctx = c.getContext("2d")!;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let w = 0;
+    let h = 0;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const mouse = { x: -9999, y: -9999 };
+    let pts: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
+    const resize = () => {
+      w = c.offsetWidth;
+      h = c.offsetHeight;
+      c.width = w * dpr;
+      c.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.round(Math.min(90, (w * h) / 16000));
+      pts = Array.from({ length: n }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.6 + 0.6,
+      }));
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    const onMove = (e: PointerEvent) => {
+      const b = c.getBoundingClientRect();
+      mouse.x = e.clientX - b.left;
+      mouse.y = e.clientY - b.top;
+    };
+    window.addEventListener("pointermove", onMove);
 
-/** Gold threads draw themselves between people (nodes), then the nodes keep pulsing. */
-function Network() {
+    let raf = 0;
+    let visible = true;
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !raf) raf = requestAnimationFrame(draw);
+    });
+    io.observe(c);
+    const LINK = 140;
+    function draw() {
+      raf = 0;
+      ctx.clearRect(0, 0, w, h);
+      for (const p of pts) {
+        if (!still) {
+          const dx = mouse.x - p.x;
+          const dy = mouse.y - p.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 180) {
+            p.vx += (dx / d) * 0.012;
+            p.vy += (dy / d) * 0.012;
+          }
+          p.vx *= 0.985;
+          p.vy *= 0.985;
+          p.vx += (Math.random() - 0.5) * 0.01;
+          p.vy += (Math.random() - 0.5) * 0.01;
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > w) p.vx *= -1;
+          if (p.y < 0 || p.y > h) p.vy *= -1;
+        }
+      }
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const a = pts[i];
+          const b = pts[j];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d < LINK) {
+            ctx.strokeStyle = `rgba(240,168,24,${(1 - d / LINK) * 0.28})`;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+      for (const p of pts) {
+        const near = Math.hypot(mouse.x - p.x, mouse.y - p.y) < 160;
+        ctx.fillStyle = near ? "rgba(255,240,120,0.95)" : "rgba(255,216,48,0.55)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, near ? p.r + 1 : p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (visible && !still) raf = requestAnimationFrame(draw);
+    }
+    raf = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("pointermove", onMove);
+    };
+  }, []);
+  return <canvas ref={ref} aria-hidden className="absolute inset-0 h-full w-full" />;
+}
+
+/** The glowing tc emblem inside slowly turning rings, with the four services orbiting it. */
+function Emblem() {
+  const rx = useSpring(useMotionValue(0), { stiffness: 80, damping: 18 });
+  const ry = useSpring(useMotionValue(0), { stiffness: 80, damping: 18 });
+  const move = (e: MouseEvent<HTMLDivElement>) => {
+    const b = e.currentTarget.getBoundingClientRect();
+    ry.set(((e.clientX - b.left) / b.width - 0.5) * 22);
+    rx.set(-((e.clientY - b.top) / b.height - 0.5) * 22);
+  };
   return (
-    <svg viewBox="0 0 520 480" aria-hidden className="w-full max-w-[520px] justify-self-center md:justify-self-end">
-      <defs>
-        <linearGradient id="tc-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#c07818" />
-          <stop offset=".45" stopColor="#f0a818" />
-          <stop offset=".6" stopColor="#fff078" />
-          <stop offset="1" stopColor="#d8a818" />
-        </linearGradient>
-        <radialGradient id="tc-glow">
-          <stop offset="0" stopColor="#ffd830" stopOpacity=".45" />
-          <stop offset="1" stopColor="#ffd830" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle cx="260" cy="240" r="210" fill="url(#tc-glow)" />
-      {LINES.map(([a, b], i) => (
-        <motion.line
-          key={i}
-          x1={P[a][0]}
-          y1={P[a][1]}
-          x2={P[b][0]}
-          y2={P[b][1]}
-          stroke="#f0a818"
-          strokeOpacity={0.7}
-          strokeWidth={1.3}
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.6, delay: 0.4 + i * 0.08, ease: "easeInOut" }}
+    <motion.div
+      onMouseMove={move}
+      onMouseLeave={() => {
+        rx.set(0);
+        ry.set(0);
+      }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 1.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="relative mx-auto aspect-square w-[min(84vw,410px)] lg:-mt-[90px] lg:mr-[80px]"
+      style={{ perspective: 900 }}
+    >
+      {/* glow */}
+      <div aria-hidden className="absolute inset-[12%] rounded-full bg-[radial-gradient(circle,rgba(255,216,48,0.35),rgba(240,168,24,0.08)_45%,transparent_70%)] blur-2xl" />
+      {/* rings */}
+      <div aria-hidden className="absolute inset-[4%] rounded-full border border-hair" style={{ animation: "spin-slow 60s linear infinite" }}>
+        <span className="absolute top-0 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sun shadow-[0_0_16px_4px_rgba(255,216,48,0.7)]" />
+      </div>
+      <div aria-hidden className="absolute inset-[16%] rounded-full border border-dashed border-gold/25" style={{ animation: "spin-rev 90s linear infinite" }} />
+      {/* the four services orbit the emblem (each label counter-rotates to stay upright) */}
+      {SERVICES.map((s, i) => {
+        const a = (i / SERVICES.length) * 360 - 45;
+        return (
+          <div key={s.s} className="absolute inset-[9%]" style={{ animation: "spin-slow 60s linear infinite" }}>
+            <div className="absolute top-1/2 left-1/2 h-0 w-1/2 origin-left" style={{ transform: `rotate(${a}deg)` }}>
+              <div className="absolute top-0 right-0" style={{ transform: `translate(50%,-50%) rotate(${-a}deg)` }}>
+                <span
+                  className="glass block rounded-full bg-[#0b0a08]/70 px-3.5 py-1.5 text-[10.5px] font-medium tracking-[.14em] whitespace-nowrap text-text uppercase md:text-[11.5px]"
+                  style={{ animation: "spin-rev 60s linear infinite" }}
+                >
+                  <span className="text-gold">0{i + 1}</span> {s.s}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {/* the emblem */}
+      <motion.div className="absolute inset-[29%] grid place-items-center" style={{ rotateX: rx, rotateY: ry }}>
+        <motion.img
+          src={asset("brand/emblem.webp")}
+          alt="True Connectz emblem"
+          width={760}
+          height={525}
+          className="w-full drop-shadow-[0_20px_40px_rgba(240,168,24,0.35)]"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
-      ))}
-      {P.map(([x, y], i) => (
-        <motion.circle
-          key={i}
-          cx={x}
-          cy={y}
-          r={i === 0 ? 15 : 6.5}
-          fill={i === 0 ? "url(#tc-gold)" : "#fff"}
-          stroke={i === 0 ? "none" : "#e3a414"}
-          strokeWidth={1.8}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 160, damping: 12, delay: 0.2 + i * 0.07 }}
-          style={{ transformBox: "fill-box", transformOrigin: "center" }}
-        >
-          <animate attributeName="r" values={i === 0 ? "15;17;15" : "6.5;8;6.5"} dur="3s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-        </motion.circle>
-      ))}
-    </svg>
+      </motion.div>
+    </motion.div>
   );
 }
 
 const HEAD = [
-  ["Connecting", "Talent."],
-  ["Strengthening", "Organisations."],
-  ["Developing", "People."],
+  { a: "Connecting", b: "Talent." },
+  { a: "Strengthening", b: "Organisations." },
+  { a: "Developing", b: "People." },
 ];
 
 export function Hero() {
   const { setTab, setAudience } = useUI();
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
   const pick = (a: Audience) => {
     setAudience(a);
     setTab(a === "ind" ? 2 : 0);
-    goTo("services-cards");
+    goTo("services");
   };
 
   return (
-    <header id="home" className="relative overflow-hidden bg-[linear-gradient(180deg,#fff,var(--b))] pt-[80px] pb-[100px] md:pt-[90px] md:pb-[110px]">
-      <div className="wrap grid items-center gap-10 md:grid-cols-[1.15fr_.85fr]">
+    <header id="home" ref={ref} className="relative overflow-hidden pt-[140px] pb-[80px] md:min-h-svh md:pt-[150px]">
+      <NetworkCanvas />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,transparent_20%,var(--night)_75%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-night" />
+
+      <motion.div style={{ y, opacity: fade }} className="wrap relative">
         <div>
-          <motion.p className="eyebrow" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+          <motion.p className="eyebrow" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.9 }}>
             {BRAND_PROMISE}
           </motion.p>
-          <h1 className="mt-[22px] mb-6 text-[clamp(44px,6.4vw,92px)]">
-            {HEAD.map(([a, b], i) => (
-              <span key={a} className="block overflow-hidden pb-[0.06em]">
+          <h1 className="mt-6 text-[clamp(44px,6.2vw,96px)]">
+            {HEAD.map(({ a, b }, i) => (
+              <span key={a} className="block overflow-hidden pb-[0.08em]">
                 <motion.span
                   className="block"
-                  initial={{ y: "105%" }}
+                  initial={{ y: "110%" }}
                   animate={{ y: "0%" }}
-                  transition={{ duration: 1, delay: 0.15 + i * 0.14, ease: [0.2, 0.7, 0.2, 1] }}
+                  transition={{ duration: 1.1, delay: 0.2 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  {a} {i === 1 ? <em>{b}</em> : b}
+                  {a} <span className="metal-text pr-[0.05em] italic">{b}</span>
                 </motion.span>
               </span>
             ))}
           </h1>
+        </div>
+        <div className="mt-8 grid items-center gap-12 lg:mt-2 lg:grid-cols-[1fr_auto] lg:gap-6">
+          <div>
           <motion.p
-            className="max-w-[520px] text-[19px] text-mut"
+            className="max-w-[520px] text-[18px] text-mut md:text-[19px]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
+            transition={{ duration: 0.9, delay: 0.8 }}
           >
             Recruitment, HR consulting, learning and outsourced HR support, all under one trusted partner.
           </motion.p>
-          <motion.div
-            className="mt-[38px] flex flex-wrap gap-3.5"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.85 }}
-          >
-            <button type="button" className="btn" onClick={() => pick("biz")}>
-              I'm a Business
-            </button>
-            <button type="button" className="btn btn-o" onClick={() => pick("ind")}>
-              I'm an Individual / Student
-            </button>
-          </motion.div>
+
+          {/* two audience paths */}
+          <div className="mt-8 grid max-w-[560px] gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["biz", "I'm a Business", "Hiring, HR systems and outsourced HR", Briefcase],
+                ["ind", "I'm an Individual / Student", "Academy programmes and career readiness", GraduationCap],
+              ] as const
+            ).map(([a, label, sub, Icon], i) => (
+              <motion.button
+                key={a}
+                type="button"
+                onClick={() => pick(a)}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                className={`group relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left transition-transform duration-300 hover:-translate-y-1 ${
+                  i === 0 ? "bg-[image:var(--metal)] text-ink" : "glass text-text"
+                }`}
+              >
+                <Icon className="mb-6 size-6" strokeWidth={1.6} />
+                <span className="block text-[15px] font-semibold">{label}</span>
+                <span className={`mt-1 block text-[13px] ${i === 0 ? "text-ink/70" : "text-mut"}`}>{sub}</span>
+                <ArrowUpRight className="absolute top-5 right-5 size-5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </motion.button>
+            ))}
+          </div>
+          </div>
+          <Emblem />
         </div>
-        <Network />
-      </div>
+      </motion.div>
     </header>
   );
 }

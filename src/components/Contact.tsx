@@ -1,42 +1,48 @@
 import { useRef, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { ArrowRight, Mail, MessageCircle, Phone, Send } from "lucide-react";
 import { asset, BRAND_PROMISE, CONTACT, FORMS, SERVICES } from "@/data/site";
 import { goTo, useUI } from "@/lib/ui";
-import { Reveal } from "./Reveal";
+import { Reveal, RiseHeading } from "./Reveal";
 
-function Field({ spec }: { spec: string }) {
+function Field({ spec, i }: { spec: string; i: number }) {
   const [name, type = "text", ...opts] = spec.split("|");
   const box =
-    "w-full rounded-[2px] border border-line bg-white px-3.5 py-[13px] font-t text-base text-ink transition-colors focus:border-gold2 focus:outline-0 focus:ring-2 focus:ring-sun/40";
+    "peer w-full rounded-xl border border-hair bg-white/[0.03] px-4 pt-6 pb-2.5 font-t text-[15px] text-text transition-colors placeholder:text-transparent focus:border-gold focus:bg-white/[0.06] focus:outline-0";
+  const label = "pointer-events-none absolute top-2 left-4 text-[10.5px] tracking-[.18em] text-mut uppercase transition-colors peer-focus:text-sun";
   return (
-    <label className={`grid gap-1.5 text-[12px] tracking-[.1em] text-mut uppercase ${type === "area" ? "sm:col-span-2" : ""}`}>
-      {name}
+    <motion.label
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.035 }}
+      className={`relative block ${type === "area" ? "sm:col-span-2" : ""}`}
+    >
       {type === "select" ? (
-        <select name={name} className={box}>
+        <select name={name} className={`${box} appearance-none [&_option]:bg-panel`}>
           {opts.map((o) => (
             <option key={o}>{o}</option>
           ))}
         </select>
       ) : type === "area" ? (
-        <textarea name={name} rows={3} className={box} />
+        <textarea name={name} rows={3} placeholder={name} className={box} />
       ) : (
-        <input name={name} type={type === "email" || type === "tel" ? type : "text"} className={box} />
+        <input name={name} type={type === "email" || type === "tel" ? type : "text"} placeholder={name} className={box} />
       )}
-    </label>
+      <span className={label}>{name}</span>
+    </motion.label>
   );
 }
 
-/** One enquiry route per service; each form can be sent by email or WhatsApp with the answers filled in. */
+/** One enquiry route per service; each can be sent by email or WhatsApp with the answers filled in. */
 export function Contact() {
   const { form, setForm } = useUI();
   const ref = useRef<HTMLFormElement>(null);
 
   const message = () => {
-    const f = ref.current!;
     const lines = [`New enquiry: ${SERVICES[form].k}`];
-    f.querySelectorAll("label").forEach((l) => {
+    ref.current!.querySelectorAll("label").forEach((l) => {
       const c = l.querySelector("input,select,textarea") as HTMLInputElement | null;
-      lines.push(`${l.firstChild?.textContent}: ${c?.value || "-"}`);
+      lines.push(`${c?.name}: ${c?.value || "-"}`);
     });
     return lines.join("\n");
   };
@@ -46,82 +52,94 @@ export function Contact() {
   };
   const byWhatsApp = () => window.open(`https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(message())}`, "_blank");
 
+  const routes = [
+    { href: CONTACT.tel, label: CONTACT.phone, Icon: Phone },
+    { href: `mailto:${CONTACT.email}`, label: CONTACT.email, Icon: Mail },
+    { href: `https://wa.me/${CONTACT.whatsapp}`, label: "WhatsApp us", Icon: MessageCircle },
+  ];
+
   return (
-    <section id="contact" className="bg-beige py-[80px] md:py-[110px]">
-      <div className="wrap grid gap-10 md:grid-cols-[.8fr_1.2fr] md:gap-[70px]">
-        <Reveal>
-          <p className="eyebrow">Contact us</p>
-          <h2 className="section-h2 mb-6">
-            Tell us what <em>you need</em>
-          </h2>
-          <p className="mb-[26px] text-mut">Choose the enquiry that fits. Each one goes to the right place and keeps the form short.</p>
-          <div>
-            {[
-              [CONTACT.tel, CONTACT.phone],
-              [`mailto:${CONTACT.email}`, CONTACT.email],
-              [`https://wa.me/${CONTACT.whatsapp}`, "WhatsApp us"],
-            ].map(([href, label]) => (
-              <a
-                key={label}
-                href={href}
-                target={href.startsWith("http") ? "_blank" : undefined}
-                rel="noopener"
-                className="group my-1.5 block w-fit font-h text-[30px] break-all transition-colors hover:text-gold"
-              >
-                {label}
-                <span className="block h-px w-0 bg-[image:var(--metal)] transition-[width] duration-500 group-hover:w-full" />
-              </a>
-            ))}
-          </div>
-        </Reveal>
-        <Reveal delay={0.15}>
-          <div role="tablist" className="mb-[26px] flex flex-wrap gap-1.5 border-b border-line">
-            {SERVICES.map((x, i) => (
-              <button
-                key={x.s}
-                type="button"
-                role="tab"
-                aria-selected={i === form}
-                onClick={() => setForm(i)}
-                className={`relative -mb-px cursor-pointer border-0 bg-transparent px-[18px] py-4 text-[13px] font-medium tracking-[.1em] uppercase transition-colors ${
-                  i === form ? "text-ink" : "text-mut hover:text-ink"
-                }`}
-              >
-                {x.s}
-                {i === form && <motion.span layoutId="form-line" className="absolute inset-x-0 bottom-0 h-[2px] bg-[image:var(--metal)]" />}
-              </button>
-            ))}
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.form
-              key={form}
-              ref={ref}
-              onSubmit={byEmail}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.35 }}
-              className="grid gap-3.5 sm:grid-cols-2"
-            >
-              {FORMS[form].map((f) => (
-                <Field key={f} spec={f} />
+    <section id="contact" className="relative py-[100px] md:py-[140px]">
+      <div aria-hidden className="pointer-events-none absolute right-0 bottom-20 size-[520px] rounded-full bg-gold/10 blur-[130px]" />
+      <div className="wrap relative grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:gap-16">
+        <div>
+          <Reveal y={16}>
+            <p className="eyebrow">Contact us</p>
+          </Reveal>
+          <RiseHeading parts={["Tell us what", { em: "you need" }]} className="section-h2" />
+          <Reveal delay={0.15}>
+            <p className="mt-5 mb-10 max-w-[420px] text-mut">Choose the enquiry that fits. Each one goes to the right place and keeps the form short.</p>
+            <div className="flex flex-col gap-3">
+              {routes.map(({ href, label, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target={href.startsWith("http") ? "_blank" : undefined}
+                  rel="noopener"
+                  className="group glass flex items-center gap-4 rounded-2xl px-5 py-4 transition-colors hover:border-gold/50"
+                >
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[image:var(--metal)] text-ink">
+                    <Icon className="size-5" strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0 flex-1 font-h text-[22px] break-all md:text-[24px]">{label}</span>
+                  <ArrowRight className="size-4 -translate-x-1 text-gold opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                </a>
               ))}
-              <div className="mt-1.5 flex flex-wrap gap-3 sm:col-span-2">
-                <button className="btn" type="submit">
-                  Send by email
+            </div>
+          </Reveal>
+        </div>
+
+        <Reveal delay={0.2}>
+          <div className="glass rounded-[28px] p-5 md:p-8">
+            <div role="tablist" className="no-scrollbar mb-6 flex gap-1 overflow-x-auto rounded-full border border-hair bg-black/30 p-1">
+              {SERVICES.map((x, i) => (
+                <button
+                  key={x.s}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === form}
+                  onClick={() => setForm(i)}
+                  className={`relative shrink-0 cursor-pointer rounded-full border-0 bg-transparent px-4 py-2.5 text-[12px] font-medium tracking-[.1em] uppercase transition-colors md:flex-1 ${
+                    i === form ? "text-ink" : "text-mut hover:text-text"
+                  }`}
+                >
+                  {i === form && <motion.span layoutId="form-pill" className="absolute inset-0 rounded-full bg-[image:var(--metal)]" transition={{ type: "spring", stiffness: 380, damping: 32 }} />}
+                  <span className="relative">{x.s}</span>
                 </button>
-                <button className="btn btn-o" type="button" onClick={byWhatsApp}>
-                  Send on WhatsApp
-                </button>
-              </div>
-            </motion.form>
-          </AnimatePresence>
+              ))}
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.form
+                key={form}
+                ref={ref}
+                onSubmit={byEmail}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="grid gap-3 sm:grid-cols-2"
+              >
+                {FORMS[form].map((f, i) => (
+                  <Field key={f} spec={f} i={i} />
+                ))}
+                <div className="mt-3 flex flex-wrap gap-3 sm:col-span-2">
+                  <button className="btn" type="submit">
+                    <Send className="size-4" /> Send by email
+                  </button>
+                  <button className="btn btn-ghost" type="button" onClick={byWhatsApp}>
+                    <MessageCircle className="size-4" /> Send on WhatsApp
+                  </button>
+                </div>
+              </motion.form>
+            </AnimatePresence>
+          </div>
         </Reveal>
       </div>
     </section>
   );
 }
 
+/** Final call to action on a band of moving metallic gold. */
 export function FinalCTA() {
   const { setForm } = useUI();
   const go = (i: number) => {
@@ -129,23 +147,14 @@ export function FinalCTA() {
     goTo("contact");
   };
   return (
-    <section className="relative overflow-hidden bg-ink py-[100px] text-center text-white">
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 left-1/2 size-[70vmax] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(240,168,24,0.18),transparent_60%)]"
-        animate={{ scale: [1, 1.12, 1] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
+    <section className="metal-band relative overflow-hidden py-[110px] text-center text-ink md:py-[150px]">
+      <img aria-hidden src={asset("brand/emblem.webp")} alt="" className="pointer-events-none absolute top-1/2 left-1/2 w-[70vw] max-w-[900px] -translate-x-1/2 -translate-y-1/2 opacity-[0.08] mix-blend-multiply" />
       <div className="wrap relative">
-        <Reveal>
-          <h2 className="mb-[34px] text-[clamp(36px,5vw,64px)]">
-            Ready to <em className="metal-text pr-[0.06em]">connect</em>?
-          </h2>
-        </Reveal>
-        <Reveal delay={0.15} className="flex flex-wrap justify-center gap-3.5">
+        <RiseHeading parts={["Ready to", "connect?"]} className="mb-12 text-[clamp(52px,9vw,140px)] leading-[0.95]" />
+        <Reveal delay={0.2} className="mx-auto flex max-w-[900px] flex-wrap justify-center gap-3">
           {SERVICES.map((s, i) => (
-            <button key={s.cta} type="button" className={`btn ${i ? "btn-o-light" : ""}`} onClick={() => go(i)}>
-              {s.cta}
+            <button key={s.cta} type="button" className="btn btn-ink" onClick={() => go(i)}>
+              {s.cta} <ArrowRight className="size-4" />
             </button>
           ))}
         </Reveal>
@@ -156,55 +165,55 @@ export function FinalCTA() {
 
 export function Footer() {
   const { setTab } = useUI();
+  const names = ["HR Recruitment", "HR Consulting & Advisory", "True Connectz Academy", "Virtual HR Solutions"];
   return (
-    <footer className="bg-ink pt-[60px] pb-[34px] text-sm text-[#b9ad95]">
-      <div className="wrap grid gap-10 md:grid-cols-[1.3fr_1fr_1fr]">
+    <footer className="relative overflow-hidden bg-night pt-20 pb-10 text-sm text-mut">
+      <div className="wrap grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <button type="button" onClick={() => goTo("home")} aria-label="True Connectz HR Services, home" className="cursor-pointer border-0 bg-transparent p-0">
-            <img src={asset("brand/logo-white.webp")} alt="True Connectz HR Services" width={900} height={886} loading="lazy" className="h-[120px] w-auto" />
+            <img src={asset("brand/logo-white.webp")} alt="True Connectz HR Services" width={900} height={886} loading="lazy" className="h-[150px] w-auto" />
           </button>
-          <p className="mt-4 max-w-[320px]">{BRAND_PROMISE}.</p>
+          <p className="mt-5 max-w-[320px]">{BRAND_PROMISE}.</p>
         </div>
         <div>
-          <h4 className="mb-3.5 text-[12px] font-semibold tracking-[.2em] text-white uppercase">Services</h4>
-          {SERVICES.map((s, i) => (
+          <h4 className="mb-4 text-[11.5px] font-semibold tracking-[.24em] text-sun uppercase">Services</h4>
+          {names.map((n, i) => (
             <button
-              key={s.k}
+              key={n}
               type="button"
               onClick={() => {
                 setTab(i);
                 goTo("services");
               }}
-              className="block cursor-pointer border-0 bg-transparent px-0 py-[3px] text-left text-[#b9ad95] transition-colors hover:text-sun"
+              className="block cursor-pointer border-0 bg-transparent px-0 py-1.5 text-left text-[15px] text-text/75 transition-colors hover:text-sun"
             >
-              {s.k === "HR Consulting, Advice & Audits" ? "HR Consulting & Advisory" : s.k === "Specialised HR Recruitment" ? "HR Recruitment" : s.k}
+              {n}
             </button>
           ))}
         </div>
         <div>
-          <h4 className="mb-3.5 text-[12px] font-semibold tracking-[.2em] text-white uppercase">Contact</h4>
-          <a href={CONTACT.tel} className="block py-[3px] transition-colors hover:text-sun">
-            {CONTACT.phone}
-          </a>
-          <a href={`mailto:${CONTACT.email}`} className="block py-[3px] transition-colors hover:text-sun">
-            {CONTACT.email}
-          </a>
-          <a href="#" className="block py-[3px] transition-colors hover:text-sun">
-            Privacy Policy
-          </a>
-          <a href="#" className="block py-[3px] transition-colors hover:text-sun">
-            Terms of Use
-          </a>
+          <h4 className="mb-4 text-[11.5px] font-semibold tracking-[.24em] text-sun uppercase">Contact</h4>
+          {[
+            [CONTACT.tel, CONTACT.phone],
+            [`mailto:${CONTACT.email}`, CONTACT.email],
+            ["#", "Privacy Policy"],
+            ["#", "Terms of Use"],
+          ].map(([h, l]) => (
+            <a key={l} href={h} className="block py-1.5 text-[15px] text-text/75 transition-colors hover:text-sun">
+              {l}
+            </a>
+          ))}
         </div>
       </div>
-      <div className="wrap mt-10 border-t border-[#3a352b] pt-[22px] text-center text-[12px]">
+      <div className="wrap mt-16 flex flex-col items-center justify-between gap-3 border-t border-hair pt-6 text-[12px] md:flex-row">
         <p>&copy; True Connectz HR Services. Design preview.</p>
+        <p className="metal-text font-h text-[16px] italic">Connecting Talent. Strengthening Organisations. Developing People.</p>
       </div>
     </footer>
   );
 }
 
-/** Floating WhatsApp button (as in the original). */
+/** Floating WhatsApp button with a soft ping. */
 export function WhatsAppFab() {
   return (
     <motion.a
@@ -214,13 +223,12 @@ export function WhatsAppFab() {
       aria-label="WhatsApp"
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      transition={{ type: "spring", stiffness: 200, damping: 14, delay: 1.5 }}
+      transition={{ type: "spring", stiffness: 200, damping: 14, delay: 1.8 }}
       whileHover={{ scale: 1.08 }}
-      className="fixed right-5 bottom-5 z-[60] grid size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-[0_10px_26px_rgba(0,0,0,.25)]"
+      className="fixed right-5 bottom-5 z-[60] grid size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-[0_10px_26px_rgba(0,0,0,.4)]"
     >
-      <svg viewBox="0 0 24 24" className="size-7 fill-current" aria-hidden>
-        <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.12-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.31l-.34-.2-3.57.94.95-3.48-.22-.36a9.4 9.4 0 0 1-1.44-5.02c0-5.2 4.23-9.43 9.44-9.43a9.38 9.38 0 0 1 6.67 2.77 9.37 9.37 0 0 1 2.76 6.67c0 5.2-4.23 9.43-9.44 9.43zm8.03-17.46A11.32 11.32 0 0 0 12.04.72C5.79.72.7 5.8.7 12.05c0 2 .52 3.95 1.52 5.66L.6 23.6l6.02-1.58a11.3 11.3 0 0 0 5.42 1.38h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.88-3.31-8.02z" />
-      </svg>
+      <span className="absolute inset-0 animate-ping rounded-full bg-[#25d366] opacity-25" />
+      <MessageCircle className="relative size-7" strokeWidth={1.8} />
     </motion.a>
   );
 }

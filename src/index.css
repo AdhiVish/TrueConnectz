@@ -1,87 +1,135 @@
 @import "tailwindcss";
 
-/* ---------- brand tokens, taken from the True Connectz logo ----------
+/* ---------- True Connectz: dark luxury, lit by the logo's gold ----------
    Logo golds: deep amber #C07818, core #F0A818, bright #FFD830, highlight #FFF078;
-   near-black #181818 ("HR SERVICES"). Gold text on white uses a deeper shade so it reads. */
+   near-black #181818 from "HR SERVICES". */
 :root {
-  --w: #fff;
-  --b: #fff8e7; /* warm cream band (a tint of the logo gold) */
-  --b2: #fbecc2;
+  --night: #0b0a08; /* page */
+  --panel: #13110d; /* raised surfaces */
+  --panel2: #1b1812;
+  --cream: #f7efdc; /* the one light band */
   --ink: #181818;
-  --mut: #6b6355;
-  --gold: #b07408; /* gold for text on light backgrounds */
-  --gold2: #f0a818; /* core logo gold */
+  --text: #f4ecd8;
+  --mut: #a69d88;
+  --gold: #f0a818;
   --sun: #ffd830;
+  --amber: #c07818;
   --glow: #fff078;
-  --line: #efe1bb;
-  /* the logo's metallic gold, for buttons and accents */
-  --metal: linear-gradient(135deg, #c07818 0%, #f0a818 32%, #fff078 52%, #ffd830 68%, #d8a818 100%);
+  --gold-ink: #9a6406; /* gold text on the cream band */
+  --hair: rgba(240, 168, 24, 0.16); /* gold hairlines */
+  --metal: linear-gradient(115deg, #c07818 0%, #f0a818 30%, #fff078 50%, #ffd830 66%, #d8a818 100%);
 }
 
 @theme inline {
+  --color-night: var(--night);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-cream: var(--cream);
   --color-ink: var(--ink);
+  --color-text: var(--text);
   --color-mut: var(--mut);
   --color-gold: var(--gold);
-  --color-gold2: var(--gold2);
-  --color-beige: var(--b);
-  --color-beige2: var(--b2);
-  --color-line: var(--line);
   --color-sun: var(--sun);
+  --color-amber: var(--amber);
+  --color-gold-ink: var(--gold-ink);
+  --color-hair: var(--hair);
   --font-h: "Cormorant Garamond", serif;
   --font-t: "Jost", sans-serif;
 }
 
 @layer base {
-  html { scroll-padding-top: 90px; }
+  html { scroll-padding-top: 100px; background: var(--night); }
   html.lenis-smooth { scroll-behavior: auto !important; }
   body {
     font-family: var(--font-t);
-    color: var(--ink);
-    background: var(--w);
+    color: var(--text);
+    background: var(--night);
     line-height: 1.65;
     font-size: 17px;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 { font-family: var(--font-h); font-weight: 500; line-height: 1.05; letter-spacing: -0.01em; }
-  em { font-style: italic; color: var(--gold); }
-  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  h1, h2, h3 { font-family: var(--font-h); font-weight: 500; line-height: 1.02; letter-spacing: -0.015em; }
+  :focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
   ::selection { background: var(--sun); color: var(--ink); }
 }
 
 @layer components {
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
   .eyebrow {
-    font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold);
-    font-weight: 500; display: flex; align-items: center; gap: 12px;
+    font-size: 11.5px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--gold);
+    font-weight: 500; display: inline-flex; align-items: center; gap: 12px;
   }
-  .eyebrow::before { content: ""; width: 34px; height: 1px; background: var(--gold); }
+  .eyebrow::before { content: ""; width: 30px; height: 1px; background: var(--metal); }
+  .on-cream .eyebrow { color: var(--gold-ink); }
+
+  /* metallic gold button with a sheen that sweeps across on hover */
   .btn {
-    display: inline-block; padding: 15px 30px; border-radius: 2px; font-size: 13px; letter-spacing: 0.14em;
-    text-transform: uppercase; font-weight: 600; border: 1px solid #d8a818;
-    background: var(--metal); background-size: 160% 100%; background-position: 0% 50%; color: var(--ink); cursor: pointer;
-    transition: box-shadow 0.3s, transform 0.3s, background-color 0.3s, color 0.3s, background-position 0.6s; font-family: var(--font-t); text-align: center;
+    position: relative; overflow: hidden; isolation: isolate;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 16px 30px; border-radius: 999px; font-size: 12.5px; letter-spacing: 0.16em;
+    text-transform: uppercase; font-weight: 600; font-family: var(--font-t);
+    background: var(--metal); color: var(--ink); border: 0; cursor: pointer;
+    box-shadow: 0 10px 30px -12px rgba(240, 168, 24, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: transform 0.3s, box-shadow 0.3s;
   }
-  .btn:hover { box-shadow: 0 10px 30px rgba(240, 168, 24, 0.4); transform: translateY(-2px); background-position: 100% 50%; }
-  .btn-o { background: transparent; color: var(--ink); border-color: var(--ink); }
-  .btn-o:hover { background: var(--ink); color: #fff; box-shadow: none; }
-  .btn-o-light { background: transparent; color: #fff; border-color: #fff; }
-  .btn-o-light:hover { background: #fff; color: var(--ink); box-shadow: none; }
-  .section-h2 { font-size: clamp(38px, 5vw, 64px); margin: 16px 0; }
+  .btn::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; transform: translateX(-120%) skewX(-20deg);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    transition: transform 0.7s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -12px rgba(240, 168, 24, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+  .btn:hover::after { transform: translateX(120%) skewX(-20deg); }
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.03); color: var(--text); box-shadow: inset 0 0 0 1px rgba(240, 168, 24, 0.45);
+    backdrop-filter: blur(8px);
+  }
+  .btn-ghost:hover { background: rgba(240, 168, 24, 0.1); box-shadow: inset 0 0 0 1px var(--sun); }
+  .btn-ink { background: var(--ink); color: var(--sun); box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.7); }
+  .btn-ink::after { background: linear-gradient(90deg, transparent, rgba(255, 216, 48, 0.25), transparent); }
+  .btn-ink:hover { box-shadow: 0 18px 40px -14px rgba(0, 0, 0, 0.8); }
+
+  .section-h2 { font-size: clamp(42px, 5.6vw, 82px); margin: 18px 0 0; }
+  .glass {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
+    border: 1px solid var(--hair);
+    backdrop-filter: blur(14px);
+  }
 }
 
-/* the gold thread drawn through the hero network */
-@keyframes pulse-node { 50% { transform: scale(1.25); } }
-.net-node { transform-box: fill-box; transform-origin: center; animation: pulse-node 3s ease-in-out infinite; }
-
-@media (prefers-reduced-motion: reduce) {
-  .net-node { animation: none; }
-  *, *::before, *::after { transition-duration: 0.01s !important; }
-}
-
-/* metallic gold text, like the logo lettering (used for accent words on dark backgrounds) */
+/* metallic gold text, like the logo lettering */
 .metal-text {
   background: var(--metal);
+  background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  animation: metal-drift 9s ease-in-out infinite alternate;
 }
+@keyframes metal-drift { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+
+/* moving metallic band (final CTA) */
+.metal-band { background: var(--metal); background-size: 240% 100%; animation: metal-drift 10s ease-in-out infinite alternate; }
+
+/* film grain over the dark page */
+.grain::after {
+  content: ""; position: fixed; inset: -50%; pointer-events: none; z-index: 70; opacity: 0.05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* marquee */
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee { animation: marquee 38s linear infinite; }
+
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes spin-rev { to { transform: rotate(-360deg); } }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .metal-text, .metal-band, .marquee { animation: none; }
+  *, *::before, *::after { transition-duration: 0.01s !important; animation-duration: 0.01s !important; }
+}
+
+/* on the cream band the bright logo gold would wash out, so accents use its deep amber end */
+.on-cream .metal-text { background-image: linear-gradient(115deg, #8a5604, #c07818 45%, #e09a10 70%, #a8680a); }
