@@ -39,6 +39,9 @@
 
 @layer base {
   html { scroll-padding-top: 100px; background: var(--night); }
+  /* phones: never let anything wider than the screen make the page swipe sideways */
+  html, body { max-width: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
+  @supports (overflow: clip) { html, body { overflow-x: clip; } }
   html.lenis-smooth { scroll-behavior: auto !important; }
   body {
     font-family: var(--font-t);
