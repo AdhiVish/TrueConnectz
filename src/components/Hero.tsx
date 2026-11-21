@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MouseEvent, type RefObject } from "react";
+import { useEffect, useRef, type MouseEvent } from "react";
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
 import { ArrowUpRight, Briefcase, GraduationCap } from "lucide-react";
 import { asset, BRAND_PROMISE, SERVICES, type Audience } from "@/data/site";
@@ -121,53 +121,72 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
- * The stage around the dust emblem: a warm glow, two slowly turning rings and
- * the four services orbiting. `slot` is the emblem's box; the dust itself is
- * drawn by ParticleEmblem on the hero-wide canvas.
+ * The four services orbit the emblem on a tilted ellipse: chips at the front
+ * (bottom) are bigger and brighter, chips at the back smaller and dimmer.
  */
-function Stage({ slot, on }: { slot: RefObject<HTMLDivElement | null>; on: boolean }) {
-  const still = reduced();
+function Orbit({ on }: { on: boolean }) {
+  const box = useRef<HTMLDivElement>(null);
+  const chips = useRef<(HTMLDivElement | null)[]>([]);
+  useEffect(() => {
+    const still = reduced();
+    let raf = 0;
+    let vis = true;
+    let a = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      raf = 0;
+      const dt = Math.min(50, now - last);
+      last = now;
+      if (!still) a += dt * 0.00011;
+      const b = box.current;
+      if (!b) return;
+      const W = b.offsetWidth, Hh = b.offsetHeight;
+      const rx = Math.min(W * 0.6, window.innerWidth / 2 - 72);
+      const ry = Hh * 0.6;
+      chips.current.forEach((el, i) => {
+        if (!el) return;
+        const t = a + (i * Math.PI) / 2 - Math.PI / 4;
+        const d = (Math.sin(t) + 1) / 2; // 0 = back, 1 = front
+        el.style.transform = `translate(-50%,-50%) translate(${Math.cos(t) * rx}px,${Math.sin(t) * ry}px) scale(${0.8 + d * 0.25})`;
+        el.style.opacity = String(0.4 + d * 0.6);
+      });
+      if (vis && !still) raf = requestAnimationFrame(tick);
+    };
+    const io = new IntersectionObserver(([e]) => {
+      vis = e.isIntersecting;
+      if (vis && !raf) raf = requestAnimationFrame(tick);
+    });
+    io.observe(box.current!);
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+    };
+  }, []);
   return (
-    <div className="relative order-first mx-auto -my-6 aspect-square w-[min(80vw,520px)] lg:order-none lg:my-0 lg:-mt-[230px] lg:mr-[20px]">
-      <motion.div
-        aria-hidden
-        className="absolute inset-0"
-        initial={{ opacity: 0, scale: 0.85 }}
-        animate={on ? { opacity: 1, scale: 1 } : {}}
-        transition={{ duration: 1.6, delay: 0.5, ease: EASE }}
-      >
-        <div className="absolute inset-[10%] rounded-full bg-[radial-gradient(circle,rgba(255,216,48,0.22),rgba(240,168,24,0.06)_45%,transparent_70%)]" />
-        <div className="absolute inset-[3%] rounded-full border border-hair" style={{ animation: "spin-slow 60s linear infinite" }}>
-          <span className="absolute top-0 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sun shadow-[0_0_16px_4px_rgba(255,216,48,0.7)]" />
-        </div>
-        <div className="absolute inset-[13%] rounded-full border border-dashed border-gold/20" style={{ animation: "spin-rev 90s linear infinite" }} />
+    <div ref={box} aria-hidden className="pointer-events-none absolute inset-0">
+      <motion.div className="absolute inset-0" initial={{ opacity: 0, scale: 0.9 }} animate={on ? { opacity: 1, scale: 1 } : {}} transition={{ duration: 1.6, delay: 0.5, ease: EASE }}>
+        <div className="absolute -inset-x-[20%] -inset-y-[24%] rounded-[50%] border border-hair" />
+        <div className="absolute -inset-x-[8%] -inset-y-[12%] rounded-[50%] border border-dashed border-gold/15" />
       </motion.div>
-      {/* the four services orbit the emblem (each label counter-rotates to stay upright) */}
-      {SERVICES.map((s, i) => {
-        const a = (i / SERVICES.length) * 360 - 45;
-        return (
-          <div key={s.s} className="absolute inset-[8%]" style={{ animation: "spin-slow 60s linear infinite" }}>
-            <div className="absolute top-1/2 left-1/2 h-0 w-1/2 origin-left" style={{ transform: `rotate(${a}deg)` }}>
-              <div className="absolute top-0 right-0" style={{ transform: `translate(50%,-50%) rotate(${-a}deg)` }}>
-                <div style={{ animation: "spin-rev 60s linear infinite" }}>
-                  <motion.span
-                    className="glass block rounded-full bg-[#0b0a08]/70 px-3.5 py-1.5 text-[10.5px] font-medium tracking-[.14em] whitespace-nowrap text-text uppercase md:text-[11.5px]"
-                    initial={{ opacity: 0, scale: 0.6 }}
-                    animate={on ? { opacity: 1, scale: 1 } : {}}
-                    transition={{ duration: 0.9, delay: 1.1 + i * 0.12, ease: EASE }}
-                  >
-                    <span className="text-gold">0{i + 1}</span> {s.s}
-                  </motion.span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-      {/* the emblem's box (the dust lands here); people who turn motion off get the plain logo */}
-      <div ref={slot} className="absolute top-[28.58%] left-[19%] aspect-[760/525] w-[62%]">
-        {still && <img src={asset("brand/emblem.webp")} alt="" width={760} height={525} className="size-full" />}
-      </div>
+      {SERVICES.map((s, i) => (
+        <div
+          key={s.s}
+          ref={(el) => {
+            chips.current[i] = el;
+          }}
+          className="absolute top-1/2 left-1/2"
+        >
+          <motion.span
+            className="glass block rounded-full bg-[#0b0a08]/75 px-3.5 py-1.5 text-[10.5px] font-medium tracking-[.14em] whitespace-nowrap text-text uppercase md:px-4 md:py-2 md:text-[12px]"
+            initial={{ opacity: 0 }}
+            animate={on ? { opacity: 1 } : {}}
+            transition={{ duration: 0.9, delay: 1.1 + i * 0.12 }}
+          >
+            <span className="text-gold">0{i + 1}</span> {s.s}
+          </motion.span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -181,19 +200,21 @@ const HEAD = [
 export function Hero() {
   const { setTab, setAudience } = useUI();
   const ref = useRef<HTMLElement>(null);
+  const top = useRef<HTMLElement>(null);
   const slot = useRef<HTMLDivElement>(null);
   const on = useIntroPhase() !== "loading";
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const still = reduced();
+  const { scrollYProgress } = useScroll({ target: top, offset: ["start start", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [0, PARALLAX]);
-  const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const fade = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
   // a soft gold light follows the cursor across the hero
   const lx = useSpring(useMotionValue(-700), { stiffness: 60, damping: 20 });
   const ly = useSpring(useMotionValue(-700), { stiffness: 60, damping: 20 });
   const light = (e: MouseEvent<HTMLElement>) => {
     const b = e.currentTarget.getBoundingClientRect();
-    lx.set(e.clientX - b.left - 350);
-    ly.set(e.clientY - b.top - 350);
+    lx.set(e.clientX - b.left - 400);
+    ly.set(e.clientY - b.top - 400);
   };
 
   const pick = (a: Audience) => {
@@ -202,95 +223,118 @@ export function Hero() {
     goTo("services");
   };
 
-  const d0 = 0.25; // the text starts this long after the loader hands over
+  const d0 = 0.25; // first-screen text starts this long after the loader hands over
+  const inView = { once: true, amount: 0.35 } as const;
 
   return (
-    <header id="home" ref={ref} onMouseMove={light} className="relative overflow-hidden pt-[140px] pb-[80px] md:min-h-svh md:pt-[150px]">
+    <header id="home" ref={ref} onMouseMove={light} className="relative overflow-hidden">
       <NetworkCanvas />
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute top-0 left-0 hidden size-[700px] rounded-full bg-[radial-gradient(circle,rgba(255,216,48,0.09),transparent_60%)] [@media(hover:hover)]:block"
+        className="pointer-events-none absolute top-0 left-0 hidden size-[800px] rounded-full bg-[radial-gradient(circle,rgba(255,216,48,0.08),transparent_60%)] [@media(hover:hover)]:block"
         style={{ x: lx, y: ly }}
       />
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,transparent_20%,var(--night)_75%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_38%,transparent_15%,var(--night)_70%)]" />
       <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-night" />
-      {!reduced() && <ParticleEmblem hero={ref} slot={slot} />}
 
-      <motion.div style={{ y, opacity: fade }} className="wrap relative">
-        <div>
-          <motion.p className="eyebrow" initial={{ opacity: 0, x: -20 }} animate={on ? { opacity: 1, x: 0 } : {}} transition={{ duration: 0.9, delay: d0 }}>
+      {/* first screen: the emblem, big and centred */}
+      <section ref={top} className="relative flex min-h-svh flex-col items-center justify-center px-4 pt-[120px] pb-[120px] md:pt-[130px]">
+        {!still && <ParticleEmblem hero={top} slot={slot} />}
+        <motion.div style={{ y, opacity: fade }} className="relative flex w-full flex-col items-center">
+          <motion.p
+            className="eyebrow justify-center text-center !tracking-[.28em] before:hidden md:before:block"
+            initial={{ opacity: 0, y: -10 }}
+            animate={on ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.9, delay: d0 + 0.9 }}
+          >
             {BRAND_PROMISE}
           </motion.p>
-          <h1 className="relative z-10 mt-6 text-[clamp(44px,6.2vw,96px)]">
-            {HEAD.map(({ a, b }, i) => (
-              <span key={a} className="block overflow-hidden pb-[0.08em]">
-                <motion.span
-                  className="block origin-left"
-                  initial={{ y: "110%", rotate: 4 }}
-                  animate={on ? { y: "0%", rotate: 0 } : {}}
-                  transition={{ duration: 1.2, delay: d0 + 0.1 + i * 0.14, ease: EASE }}
-                >
-                  {a} <span className="metal-text pr-[0.05em] italic">{b}</span>
-                </motion.span>
-              </span>
-            ))}
-          </h1>
-        </div>
-        <div className="mt-8 grid items-center gap-12 lg:mt-2 lg:grid-cols-[1fr_auto] lg:gap-6">
-          <div>
-            <motion.p
-              className="max-w-[520px] text-[18px] text-mut md:text-[19px]"
-              initial={{ opacity: 0, y: 20 }}
-              animate={on ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.9, delay: d0 + 0.6 }}
-            >
-              Recruitment, HR consulting, learning and outsourced HR support, all under one trusted partner.
-            </motion.p>
-
-            {/* two audience paths */}
-            <div className="mt-8 grid max-w-[560px] gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["biz", "I'm a Business", "Hiring, HR systems and outsourced HR", Briefcase],
-                  ["ind", "I'm an Individual / Student", "Academy programmes and career readiness", GraduationCap],
-                ] as const
-              ).map(([a, label, sub, Icon], i) => (
-                <motion.button
-                  key={a}
-                  type="button"
-                  onClick={() => pick(a)}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={on ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.8, delay: d0 + 0.8 + i * 0.12, ease: EASE }}
-                  className={`group relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left transition-transform duration-300 hover:-translate-y-1 ${
-                    i === 0 ? "bg-[image:var(--metal)] text-ink" : "glass text-text"
-                  }`}
-                >
-                  <Icon className="mb-6 size-6" strokeWidth={1.6} />
-                  <span className="block text-[15px] font-semibold">{label}</span>
-                  <span className={`mt-1 block text-[13px] ${i === 0 ? "text-ink/70" : "text-mut"}`}>{sub}</span>
-                  <ArrowUpRight className="absolute top-5 right-5 size-5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </motion.button>
-              ))}
+          <div className="relative mt-16 w-[min(78vw,700px,calc((100svh-420px)*1.448))] md:mt-20">
+            <div aria-hidden className="absolute -inset-[30%] rounded-full bg-[radial-gradient(closest-side,rgba(255,216,48,0.16),rgba(240,168,24,0.05)_50%,transparent)]" />
+            <Orbit on={on} />
+            {/* the emblem's box (the dust lands here); people who turn motion off get the plain logo */}
+            <div ref={slot} className="relative aspect-[760/525] w-full">
+              {still && <img src={asset("brand/emblem.webp")} alt="" width={760} height={525} className="size-full" />}
             </div>
           </div>
-          <Stage slot={slot} on={on} />
-        </div>
-      </motion.div>
+          <motion.p
+            className="mt-16 text-[10.5px] tracking-[.32em] text-mut uppercase md:mt-[72px]"
+            initial={{ opacity: 0 }}
+            animate={on ? { opacity: 1 } : {}}
+            transition={{ duration: 1, delay: d0 + 2 }}
+          >
+            <span className="hidden [@media(hover:hover)]:inline">Move through the logo · click it</span>
+            <span className="[@media(hover:hover)]:hidden">Touch the logo · tap it</span>
+          </motion.p>
+        </motion.div>
 
-      {/* scroll cue */}
-      <motion.div
-        aria-hidden
-        className="absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex"
-        initial={{ opacity: 0 }}
-        animate={on ? { opacity: 1 } : {}}
-        transition={{ duration: 1, delay: d0 + 1.6 }}
-      >
-        <span className="text-[10px] tracking-[.4em] text-mut uppercase">Scroll</span>
-        <span className="relative h-12 w-px overflow-hidden bg-white/10">
-          <span className="cue-line absolute inset-0 bg-[image:var(--metal)]" />
-        </span>
-      </motion.div>
+        {/* scroll cue */}
+        <motion.div
+          aria-hidden
+          className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-col items-center"
+          initial={{ opacity: 0 }}
+          animate={on ? { opacity: 1 } : {}}
+          transition={{ duration: 1, delay: d0 + 1.6 }}
+        >
+          <span className="relative h-10 w-px overflow-hidden bg-white/10">
+            <span className="cue-line absolute inset-0 bg-[image:var(--metal)]" />
+          </span>
+        </motion.div>
+      </section>
+
+      {/* then the message and the two ways in */}
+      <div className="wrap relative pt-6 pb-[90px] md:pb-[120px]">
+        {/* the trigger sits on the h1: each line starts hidden inside its own clip, so it can't trigger itself */}
+        <motion.h1 className="text-[clamp(44px,6.4vw,100px)]" initial="hide" whileInView="show" viewport={inView}>
+          {HEAD.map(({ a, b }, i) => (
+            <span key={a} className="block overflow-hidden pb-[0.08em]">
+              <motion.span
+                className="block origin-left"
+                variants={{ hide: { y: "110%", rotate: 4 }, show: { y: "0%", rotate: 0, transition: { duration: 1.2, delay: i * 0.12, ease: EASE } } }}
+              >
+                {a} <span className="metal-text pr-[0.05em] italic">{b}</span>
+              </motion.span>
+            </span>
+          ))}
+        </motion.h1>
+        <div className="mt-10 grid items-end gap-8 lg:mt-14 lg:grid-cols-[1fr_1.15fr] lg:gap-14">
+          <motion.p
+            className="max-w-[520px] text-[18px] text-mut md:text-[20px]"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={inView}
+            transition={{ duration: 0.9, delay: 0.3 }}
+          >
+            Recruitment, HR consulting, learning and outsourced HR support, all under one trusted partner.
+          </motion.p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["biz", "I'm a Business", "Hiring, HR systems and outsourced HR", Briefcase],
+                ["ind", "I'm an Individual / Student", "Academy programmes and career readiness", GraduationCap],
+              ] as const
+            ).map(([a, label, sub, Icon], i) => (
+              <motion.button
+                key={a}
+                type="button"
+                onClick={() => pick(a)}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={inView}
+                transition={{ duration: 0.8, delay: 0.4 + i * 0.12, ease: EASE }}
+                className={`group relative cursor-pointer overflow-hidden rounded-2xl p-5 text-left transition-transform duration-300 hover:-translate-y-1 ${
+                  i === 0 ? "bg-[image:var(--metal)] text-ink" : "glass text-text"
+                }`}
+              >
+                <Icon className="mb-6 size-6" strokeWidth={1.6} />
+                <span className="block text-[15px] font-semibold">{label}</span>
+                <span className={`mt-1 block text-[13px] ${i === 0 ? "text-ink/70" : "text-mut"}`}>{sub}</span>
+                <ArrowUpRight className="absolute top-5 right-5 size-5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </div>
     </header>
   );
 }
