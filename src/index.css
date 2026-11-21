@@ -143,3 +143,10 @@ html.lenis-scrolling .metal-text, html.lenis-scrolling .metal-band { animation-p
 
 /* on the cream band the bright logo gold would wash out, so accents use its deep amber end */
 .on-cream .metal-text { background-image: linear-gradient(115deg, #8a5604, #c07818 45%, #e09a10 70%, #a8680a); }
+
+/* loader: the sheen is clipped to the emblem's own shape */
+.loader-mask { -webkit-mask: var(--m) center / 100% 100% no-repeat; mask: var(--m) center / 100% 100% no-repeat; }
+
+/* hero: scroll cue */
+@keyframes cue { 0% { transform: scaleY(0); transform-origin: top; } 45% { transform: scaleY(1); transform-origin: top; } 55% { transform: scaleY(1); transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+.cue-line { animation: cue 2.2s cubic-bezier(.65,0,.35,1) infinite; }

@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/
 import { ChevronDown } from "lucide-react";
 import { asset, SERVICES } from "@/data/site";
 import { goTo, useUI } from "@/lib/ui";
+import { useIntroPhase } from "@/lib/intro";
 
 /** The guidance document's navigation; the four service pages sit in one "Services" dropdown on desktop. */
 const MAIN: { label: string; id: string }[] = [
@@ -16,6 +17,7 @@ const SERVICE_LINKS = ["HR Recruitment", "HR Consulting & Advisory", "True Conne
 
 export function Navbar() {
   const { setTab } = useUI();
+  const loading = useIntroPhase() === "loading";
   const [open, setOpen] = useState(false);
   const [drop, setDrop] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -37,8 +39,9 @@ export function Navbar() {
 
   return (
     <motion.nav
-      animate={{ y: hidden && !open ? -120 : 0 }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ y: -120 }}
+      animate={{ y: loading || (hidden && !open) ? -120 : 0 }}
+      transition={{ duration: loading ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-x-0 top-[34px] z-50 px-3 md:top-[38px]"
     >
       <div
