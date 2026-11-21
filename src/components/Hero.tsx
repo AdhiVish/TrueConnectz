@@ -52,8 +52,14 @@ function NetworkCanvas() {
     });
     io.observe(c);
     const LINK = 140;
+    const root = document.documentElement;
     function draw() {
       raf = 0;
+      // hold the picture while the page is scrolling: no redraw = lighter scroll frames
+      if (root.classList.contains("lenis-scrolling")) {
+        if (visible && !still) raf = requestAnimationFrame(draw);
+        return;
+      }
       ctx.clearRect(0, 0, w, h);
       for (const p of pts) {
         if (!still) {
