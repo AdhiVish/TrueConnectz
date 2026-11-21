@@ -43,7 +43,7 @@ export function Navbar() {
     >
       <div
         className={`mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 rounded-full border px-4 py-2 transition-all duration-500 md:px-6 ${
-          scrolled ? "border-hair bg-[#0b0a08]/80 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.9)] backdrop-blur-xl" : "border-transparent bg-transparent"
+          scrolled ? "border-hair bg-[#0b0a08]/80 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.9)] backdrop-blur-md" : "border-transparent bg-transparent"
         }`}
       >
         <button type="button" onClick={() => go("home")} aria-label="True Connectz HR Services, home" className="flex shrink-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0">

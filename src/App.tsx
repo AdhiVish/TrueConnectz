@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
+import { startAnimPauser } from "@/lib/perf";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { IndustryTicker, Industries, ServicesExplorer } from "@/components/Services";
@@ -8,6 +9,7 @@ import { Contact, FinalCTA, Footer, WhatsAppFab } from "@/components/Contact";
 
 export default function App() {
   // smooth scrolling (off for people who ask for reduced motion)
+  useEffect(() => startAnimPauser(), []);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const lenis = new Lenis({ lerp: 0.11, autoRaf: true });

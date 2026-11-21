@@ -60,7 +60,7 @@ export function Contact() {
 
   return (
     <section id="contact" className="relative py-[100px] md:py-[140px]">
-      <div aria-hidden className="pointer-events-none absolute right-0 bottom-20 size-[520px] rounded-full bg-gold/10 blur-[130px]" />
+      <div aria-hidden className="pointer-events-none absolute right-0 bottom-20 size-[780px] translate-x-[130px] translate-y-[130px] rounded-full bg-[radial-gradient(closest-side,rgba(176,116,8,0.13),transparent)]" />
       <div className="wrap relative grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:gap-16">
         <div>
           <Reveal y={16}>

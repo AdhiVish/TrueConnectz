@@ -33,7 +33,7 @@ export function ServicesExplorer() {
   const s = SERVICES[tab];
   return (
     <section id="services" className="relative py-[100px] md:py-[140px]">
-      <div aria-hidden className="pointer-events-none absolute top-40 -left-40 size-[520px] rounded-full bg-gold/10 blur-[120px]" />
+      <div aria-hidden className="pointer-events-none absolute top-40 -left-40 size-[760px] -translate-x-[120px] -translate-y-[120px] rounded-full bg-[radial-gradient(closest-side,rgba(176,116,8,0.13),transparent)]" />
       <div className="wrap relative">
         <SectionHead
           eyebrow="Four service verticals"
@@ -74,7 +74,7 @@ export function ServicesExplorer() {
           {/* detail panel */}
           <Reveal delay={0.2} className="relative">
             <div className="glass relative overflow-hidden rounded-[28px] p-7 md:p-10">
-              <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-sun/15 blur-3xl" />
+              <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 size-[26rem] -translate-x-[-4rem] -translate-y-[4rem] rounded-full bg-[radial-gradient(closest-side,rgba(240,168,24,0.18),transparent)]" />
               <AnimatePresence mode="wait">
                 <motion.div
                   key={tab}
@@ -157,7 +157,7 @@ export function Industries() {
               >
                 <motion.span
                   aria-hidden
-                  className="pointer-events-none absolute -right-10 -bottom-10 size-64 rounded-full bg-sun/20 blur-3xl"
+                  className="pointer-events-none absolute -right-10 -bottom-10 size-[24rem] translate-x-16 translate-y-16 rounded-full bg-[radial-gradient(closest-side,rgba(240,168,24,0.22),transparent)]"
                   animate={{ opacity: on ? 1 : 0 }}
                 />
                 <span className={`relative font-h text-[48px] leading-none md:text-[64px] ${on ? "metal-text" : "text-text/20"}`}>0{i + 1}</span>

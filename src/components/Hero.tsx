@@ -132,7 +132,7 @@ function Emblem() {
       style={{ perspective: 900 }}
     >
       {/* glow */}
-      <div aria-hidden className="absolute inset-[12%] rounded-full bg-[radial-gradient(circle,rgba(255,216,48,0.35),rgba(240,168,24,0.08)_45%,transparent_70%)] blur-2xl" />
+      <div aria-hidden className="absolute inset-[12%] rounded-full bg-[radial-gradient(circle,rgba(255,216,48,0.35),rgba(240,168,24,0.08)_45%,transparent_70%)]" />
       {/* rings */}
       <div aria-hidden className="absolute inset-[4%] rounded-full border border-hair" style={{ animation: "spin-slow 60s linear infinite" }}>
         <span className="absolute top-0 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sun shadow-[0_0_16px_4px_rgba(255,216,48,0.7)]" />

@@ -84,7 +84,6 @@
   .btn:hover::after { transform: translateX(120%) skewX(-20deg); }
   .btn-ghost {
     background: rgba(255, 255, 255, 0.03); color: var(--text); box-shadow: inset 0 0 0 1px rgba(240, 168, 24, 0.45);
-    backdrop-filter: blur(8px);
   }
   .btn-ghost:hover { background: rgba(240, 168, 24, 0.1); box-shadow: inset 0 0 0 1px var(--sun); }
   .btn-ink { background: var(--ink); color: var(--sun); box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.7); }
@@ -95,7 +94,6 @@
   .glass {
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
     border: 1px solid var(--hair);
-    backdrop-filter: blur(14px);
   }
 }
 
@@ -115,9 +113,18 @@
 
 /* film grain over the dark page */
 .grain::after {
-  content: ""; position: fixed; inset: -50%; pointer-events: none; z-index: 70; opacity: 0.05;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 70; opacity: 0.035;
+  background-image: url("/brand/noise.png"); background-size: 200px 200px;
+  transform: translateZ(0); will-change: transform; contain: strict;
 }
+
+/* Smooth scrolling: the gold shimmer repaints its text every frame, so it only
+   runs while the element is on screen (data-anim-on, set in lib/perf.ts) and
+   holds still while the page is actually scrolling. */
+.metal-text, .metal-band { animation-play-state: paused; }
+[data-anim-on].metal-text, [data-anim-on].metal-band { animation-play-state: running; }
+html.lenis-scrolling .metal-text, html.lenis-scrolling .metal-band { animation-play-state: paused; }
+@media (hover: none), (max-width: 767px) { .metal-text, .metal-band { animation: none; } }
 
 /* marquee */
 @keyframes marquee { to { transform: translateX(-50%); } }
