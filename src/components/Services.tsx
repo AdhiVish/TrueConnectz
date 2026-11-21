@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, Building2, Cpu, HeartPulse, Hotel, Truck } from "lucide-react";
-import { INDUSTRIES, SERVICES } from "@/data/site";
+import { asset, INDUSTRIES, INDUSTRY_PHOTOS, SERVICES } from "@/data/site";
 import { goTo, useUI } from "@/lib/ui";
 import { Reveal, SectionHead } from "./Reveal";
 
@@ -151,10 +151,25 @@ export function Industries() {
                 onClick={() => setOpen(i)}
                 animate={{ flexGrow: on ? 2.4 : 1 }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className={`relative flex min-h-[120px] basis-0 cursor-pointer flex-col justify-between overflow-hidden rounded-[24px] border p-6 text-left md:min-h-0 ${
-                  on ? "border-gold/50 bg-panel2" : "border-hair bg-panel"
+                className={`group relative flex basis-0 cursor-pointer flex-col justify-between overflow-hidden rounded-[24px] border p-6 text-left transition-[min-height] duration-500 md:min-h-0 ${
+                  on ? "min-h-[300px] border-gold/50 bg-panel2" : "min-h-[172px] border-hair bg-panel"
                 }`}
               >
+                {/* industry photo: full colour on the open panel, dimmed and grey on the others */}
+                <img
+                  src={asset(INDUSTRY_PHOTOS[i].src)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className={`pointer-events-none absolute inset-0 size-full object-cover transition-[opacity,filter,transform] duration-700 ease-out ${
+                    on ? "scale-100 opacity-90 grayscale-0" : "scale-110 opacity-35 grayscale group-hover:opacity-50"
+                  }`}
+                  style={{ objectPosition: INDUSTRY_PHOTOS[i].pos }}
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,10,8,0.6),rgba(11,10,8,0.1)_35%,rgba(11,10,8,0.35)_60%,rgba(11,10,8,0.95))]"
+                />
                 <motion.span
                   aria-hidden
                   className="pointer-events-none absolute -right-10 -bottom-10 size-[24rem] translate-x-16 translate-y-16 rounded-full bg-[radial-gradient(closest-side,rgba(240,168,24,0.22),transparent)]"

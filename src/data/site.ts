@@ -161,6 +161,15 @@ export const FORMS: string[][] = [
 
 export const INDUSTRIES = ["Construction & Engineering", "IT & Technology", "Healthcare", "Logistics & Supply Chain", "Hotels, Resorts & Hospitality"];
 
+/** Stock photos for the industry panels (Unsplash License, free for commercial use). `pos` = focal point. */
+export const INDUSTRY_PHOTOS = [
+  { src: "industries/construction.webp", pos: "22% 40%", credit: "Josh Olalde / Unsplash" },
+  { src: "industries/it.webp", pos: "55% 40%", credit: "Shamin Haky / Unsplash" },
+  { src: "industries/health.webp", pos: "50% 30%", credit: "JESHOOTS.COM / Unsplash" },
+  { src: "industries/logistics.webp", pos: "50% 45%", credit: "Kseniia Ilinykh / Unsplash" },
+  { src: "industries/hotel.webp", pos: "50% 60%", credit: "Ryan Waldman / Unsplash" },
+];
+
 export const WHY = [
   { h: "Pan-India reach", p: "Support for organisations hiring and growing across locations." },
   { h: "Industry understanding", p: "Hiring and HR support shaped around the sectors we serve." },
