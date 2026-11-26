@@ -92,7 +92,7 @@ export function Steps() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 80%", "end 55%"] });
   const line = useTransform(scrollYProgress, [0, 1], [0, 1]);
   return (
-    <section className="relative border-y border-hair bg-panel py-[100px] md:py-[140px]">
+    <section id="process" className="relative border-y border-hair bg-panel py-[100px] md:py-[140px]">
       <div className="wrap">
         <SectionHead eyebrow="How we work" parts={["A simple,", { em: "clear" }, "recruitment process"]} />
         <div ref={ref} className="relative grid gap-8 md:grid-cols-7 md:gap-2">
@@ -152,7 +152,7 @@ export function Proof() {
 /** About + Insights share the one warm cream band. */
 export function AboutAndInsights() {
   return (
-    <div className="on-cream relative bg-cream text-ink">
+    <div data-rail-light className="on-cream relative bg-cream text-ink">
       <section id="about" className="py-[100px] md:py-[140px]">
         <div className="wrap grid items-start gap-12 lg:grid-cols-[1.1fr_.9fr] lg:gap-20">
           <div>

@@ -8,6 +8,7 @@ import { Hero } from "@/components/Hero";
 import { IndustryTicker, Industries, ServicesExplorer } from "@/components/Services";
 import { AboutAndInsights, Proof, Steps, Why } from "@/components/Story";
 import { Contact, FinalCTA, Footer, WhatsAppFab } from "@/components/Contact";
+import { ScrollRail } from "@/components/ScrollRail";
 
 export default function App() {
   // smooth scrolling (off for people who ask for reduced motion)
@@ -35,6 +36,7 @@ export default function App() {
         <span className="sm:hidden">Design preview · True Connectz</span>
       </div>
       <Navbar />
+      <ScrollRail />
       <main>
         <Hero />
         <IndustryTicker />
