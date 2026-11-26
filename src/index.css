@@ -136,6 +136,10 @@ html.lenis-scrolling .metal-text, html.lenis-scrolling .metal-band { animation-p
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* no browser scrollbar anywhere (scrolling still works) */
+html { scrollbar-width: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .metal-text, .metal-band, .marquee { animation: none; }
   *, *::before, *::after { transition-duration: 0.01s !important; animation-duration: 0.01s !important; }
